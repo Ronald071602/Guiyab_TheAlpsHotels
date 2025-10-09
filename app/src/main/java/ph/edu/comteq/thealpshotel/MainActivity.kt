@@ -5,14 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,19 +14,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -86,11 +77,18 @@ fun Homepage(modifier: Modifier = Modifier) {
     // main container
     Column(
         modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFF5F5F5), Color(0xFFEAEAEA))
+                )
+            )
     ) {
         // header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color(0xFF1E88E5))
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -101,7 +99,8 @@ fun Homepage(modifier: Modifier = Modifier) {
                     text = "The Alps Hotel",
                     modifier = Modifier.padding(end = 8.dp),
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 Image(
                     painter = painterResource(id = R.drawable.france_national_flag),
@@ -113,6 +112,7 @@ fun Homepage(modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Outlined.Person,
                 contentDescription = "User Icon",
+                tint = Color.White,
                 modifier = Modifier.width(40.dp)
             )
         }
@@ -126,6 +126,7 @@ fun Homepage(modifier: Modifier = Modifier) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             placeholder = { Text("Search...") },
             singleLine = true,
+            shape = RoundedCornerShape(50.dp)
         )
 
         // hotel list
@@ -133,12 +134,6 @@ fun Homepage(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize()
         ) {
             items(filteredHotels) { hotel ->
-//                Text(
-//                    text = hotel.hotel_name,
-//                    fontSize = 18.sp,
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier.padding(16.dp)
-//                )
                 HotelCard(hotel = hotel)
             }
         }
@@ -148,11 +143,16 @@ fun Homepage(modifier: Modifier = Modifier) {
 @Composable
 fun HotelCard(hotel: Hotel) {
     Card(
-        modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -164,18 +164,22 @@ fun HotelCard(hotel: Hotel) {
                     .build(),
                 contentDescription = hotel.hotel_name,
                 placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier
+                    .size(120.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
             // hotel info
             Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
             ) {
                 Text(
                     text = hotel.hotel_name,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -185,11 +189,12 @@ fun HotelCard(hotel: Hotel) {
                     Text(
                         text = hotel.hotel_rating.toString(),
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E88E5)
                     )
-                    // star
-                        // TODO :
-                    repeat(4){
+                    // stars based on rounded rating
+                    val starCount = kotlin.math.round(hotel.hotel_rating).toInt()
+                    repeat(starCount) {
                         Icon(
                             imageVector = Icons.Outlined.Star,
                             contentDescription = "Star",
@@ -198,15 +203,18 @@ fun HotelCard(hotel: Hotel) {
                         )
                     }
                 }
-                Text (
+
+                Text(
                     text = "${hotel.hotel_to_ski_distance} km to ski",
                     fontSize = 14.sp,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun HomepagePreview() {
