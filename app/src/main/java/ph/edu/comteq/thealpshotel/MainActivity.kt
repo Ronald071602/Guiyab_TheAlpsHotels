@@ -11,6 +11,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,17 +63,46 @@ data class BookingData(
     val room: Room
 )
 
+data class Booking(
+    val id: Int,
+    val firstName: String,
+    val lastName: String,
+    val hotelName: String,
+    val checkInDate: String,
+    val checkOutDate: String,
+    val adults: Int,
+    val children: Int,
+    val rooms: Int,
+    val isBusinessTravel: Boolean,
+    val paymentMethod: String,
+    val totalPrice: Int
+)
+
 @Composable
 fun MainScreen() {
     var showProfile by remember { mutableStateOf(false) }
     var selectedHotelId by remember { mutableStateOf<Int?>(null) }
     var bookingData by remember { mutableStateOf<BookingData?>(null) }
+    var showMyBookings by remember { mutableStateOf(false) }
+    var bookings by remember { mutableStateOf(listOf<Booking>()) }
 
     when {
-        showProfile -> ProfileScreen(onBack = { showProfile = false })
+        showMyBookings -> MyBookingsScreen(
+            bookings = bookings,
+            onBack = { showMyBookings = false }
+        )
+        showProfile -> ProfileScreen(
+            onBack = { showProfile = false },
+            onMyBookingsClick = { showMyBookings = true }
+        )
         bookingData != null -> BookingConfirmScreen(
             bookingData = bookingData!!,
-            onBack = { bookingData = null }
+            onBack = { bookingData = null },
+            onBookingConfirmed = { booking ->
+                bookings = bookings + booking
+                bookingData = null
+                showMyBookings = true
+            }
         )
         selectedHotelId != null -> GuestReviewsScreen(
             hotelId = selectedHotelId!!,
@@ -594,7 +624,146 @@ fun GuestReviewsScreen(hotelId: Int, onBack: () -> Unit, onRoomClick: (Int, Stri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
+fun MyBookingsScreen(bookings: List<Booking>, onBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "My bookings",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1E88E5))
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "List of my bookings",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF424242)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (bookings.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No bookings yet",
+                        fontSize = 16.sp,
+                        color = Color.Gray
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    itemsIndexed(bookings) { index, booking ->
+                        BookingItemCard(
+                            bookingNumber = index + 1,
+                            booking = booking
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BookingItemCard(bookingNumber: Int, booking: Booking) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF6F6F6)),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Booking number
+            Text(
+                text = bookingNumber.toString(),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E88E5),
+                modifier = Modifier.padding(end = 8.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "${booking.firstName} ${booking.lastName}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+                Text(
+                    text = booking.hotelName,
+                    fontSize = 14.sp,
+                    color = Color(0xFF424242),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text(
+                    text = "${booking.checkInDate} to ${booking.checkOutDate}",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text(
+                    text = "${booking.adults} Adults, ${booking.children} Children, ${booking.rooms} Room",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+                Text(
+                    text = "${if (booking.isBusinessTravel) "For business" else "For sightseeing"} Pay with ${booking.paymentMethod.lowercase()}",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+
+            // Price
+            Text(
+                text = "€ ${booking.totalPrice}",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E88E5)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(onBack: () -> Unit, onMyBookingsClick: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -685,13 +854,29 @@ fun ProfileScreen(onBack: () -> Unit) {
                 lineHeight = 22.sp,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { onMyBookingsClick() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
+            ) {
+                Text(
+                    text = "My Bookings",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookingConfirmScreen(bookingData: BookingData, onBack: () -> Unit) {
+fun BookingConfirmScreen(bookingData: BookingData, onBack: () -> Unit, onBookingConfirmed: (Booking) -> Unit = {}) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var checkInDate by remember { mutableStateOf("Tue, Sep 10, 2024") }
@@ -1074,9 +1259,22 @@ fun BookingConfirmScreen(bookingData: BookingData, onBack: () -> Unit) {
                 TextButton(
                     onClick = {
                         showConfirmDialog = false
-                        // In a real app, save the booking here
-                        // For now, just navigate back
-                        onBack()
+                        // Create and save the booking
+                        val booking = Booking(
+                            id = System.currentTimeMillis().toInt(),
+                            firstName = firstName,
+                            lastName = lastName,
+                            hotelName = bookingData.hotelName,
+                            checkInDate = checkInDate,
+                            checkOutDate = checkOutDate,
+                            adults = adults,
+                            children = children,
+                            rooms = rooms,
+                            isBusinessTravel = isBusinessTravel,
+                            paymentMethod = paymentMethod,
+                            totalPrice = totalPrice
+                        )
+                        onBookingConfirmed(booking)
                     }
                 ) {
                     Text("Yes")
